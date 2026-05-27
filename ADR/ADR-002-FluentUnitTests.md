@@ -1,0 +1,11 @@
+Decision: Unit tests are fluent chains that exercise as much of the app as possible and read top-to-bottom as the user actions they simulate. A test is one `try await` chain on a scenario builder; every setup, action, and assertion is a chainable scenario method.
+
+Reasoning: A chain forces every test concern (build a path, decode a ViewRep field, match a boundary error) into the scenario/assertion layer where it stays aligned with ADR-003 (drive via `Intent`, observe via `ViewRep`) and can be reused. It also keeps tests phrased in user-scenario language and exercises the real activity / intent race conditions instead of a fixture-shaped subset. When a step cannot be expressed fluently, that is a signal the scenario API is missing a method — add the method, do not bypass the chain. The only sanctioned chain break is a state-machine shutdown/restart (e.g. a relaunch round-trip, see `scenario.relaunch()`), where each launch gets its own chain.
+
+The concrete anti-patterns this ADR rules out — disjoint `let scenario = …` capture followed by standalone `await scenario.foo()` statements, raw filesystem or adapter plumbing in the test body, and setup helpers that return a captured scenario — should not appear in test bodies. Worked examples live in [`Tests/DomainLogicTests/MoviesToWatchTests.swift`](../Tests/DomainLogicTests/MoviesToWatchTests.swift).
+
+## Review Scope
+
+**Strengthens** findings about tests that fall through silently instead of failing loudly, disjoint scenario captures, raw adapter/filesystem plumbing in test bodies, and boundary-error matchers narrowed to a single guard. Cite this ADR when the underlying complaint is "the test cannot fail for the reason it claims to test."
+
+**Also strengthens** findings about refactors that intentionally collapse multiple independent error paths into one (e.g. extracting concurrent operations into an `async let` group where any one failure cancels the others) without a paired regression test pinning the new collapsed semantics. The simplification may be defensible — but without a test demonstrating the new collapsed behaviour, a later refactor that accidentally restores per-leg handling escapes review. The test is the durable record that the collapse was deliberate.

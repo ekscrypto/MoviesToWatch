@@ -19,6 +19,49 @@ watched, search a (mock) catalogue, and persists everything to disk.
 | **Adapter**      | `Sources/DomainLogic/Adapters/Adapter.*.swift`     | Every external dependency (disk, search service) behind a protocol — fully mockable. |
 | **Fluent tests** | `Tests/DomainLogicTests/Scaffolding/Scenario*.swift` | Tests read like user actions, drive the app via intents, observe via ViewRep. |
 
+## Architecture Decision Records
+
+The rules behind the pattern live in [`ADR/`](./ADR/) as numbered Architecture
+Decision Records. Each ADR captures one rule (e.g. *StateMachine as one-way
+pipeline*, *Swift Concurrency only*, *Drive via `Intent`, observe via
+`ViewRep`*) with its reasoning and a `## Review Scope` section that defines
+exactly what counts as a violation — and what explicitly does **not**. The
+ADRs are the spec; the table above is just a map.
+
+| ADR | Topic |
+| --- | --- |
+| [ADR-001](./ADR/ADR-001-StateMachine.md) | StateMachine as one-way pipeline |
+| [ADR-002](./ADR/ADR-002-FluentUnitTests.md) | Fluent unit tests |
+| [ADR-003](./ADR/ADR-003-ViewRepAndIntentsInTests.md) | Drive via `Intent`, observe via `ViewRep` |
+| [ADR-004](./ADR/ADR-004-StateDrivenUI.md) | State-driven UI via `ViewRep` |
+| [ADR-005](./ADR/ADR-005-AdapterPattern.md) | Adapter pattern for system I/O |
+| [ADR-006](./ADR/ADR-006-SwiftConcurrency.md) | Swift Concurrency only (no GCD / Combine) |
+| [ADR-007](./ADR/ADR-007-SwiftUI.md) | SwiftUI for UI |
+| [ADR-008](./ADR/ADR-008-TestExpectationsForViewRepWaits.md) | Predicate-driven `ViewRep` waits |
+| [ADR-009](./ADR/ADR-009-ViewRepFailFastOnInvariants.md) | `ViewRep` consumers fail fast |
+| [ADR-010](./ADR/ADR-010-SwiftTesting.md) | Swift Testing only (no XCTest) |
+| [ADR-011](./ADR/ADR-011-WireShapeLockedAgainstLiteralFixtures.md) | Wire shapes locked against literal fixtures |
+| [ADR-012](./ADR/ADR-012-CollapseFastOnCancel.md) | Cancellation is terminal |
+| [ADR-013](./ADR/ADR-013-StateMachineInternalStateIsNotQueryable.md) | StateMachine internal state is not queryable |
+
+### Auditing changes with `/adr-check`
+
+The repo ships a Claude Code slash command at
+[`.claude/commands/adr-check.md`](./.claude/commands/adr-check.md) that audits
+pending changes against every ADR. In a Claude Code session at the repo root,
+run:
+
+```
+/adr-check                # audit Sources/ and Tests/ against all ADRs
+/adr-check ADR-006        # only check Swift-Concurrency-only
+/adr-check Sources/**/*.swift   # scope by path glob
+```
+
+The command reads each ADR's `## Review Scope` section as the authoritative
+checklist, honours its `Drops` clauses (sanctioned exceptions are not
+violations), and prints a per-ADR Markdown report with `path:line` citations.
+It detects only — it does not propose fixes.
+
 ## Run it
 
 ```bash
